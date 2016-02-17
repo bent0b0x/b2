@@ -339,8 +339,8 @@ data2 = data2.sort(function (a, b) {
 b2.graphLineData([data])
 .details({
   type: 'scatter',
-  width: 1000,
-  height: 1000,
+  width: 500,
+  height: 500,
   xTicks: 4,
   yTicks: 4,
   ease: 'linear',
