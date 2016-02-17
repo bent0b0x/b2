@@ -1,0 +1,78 @@
+*, *:before, *:after {
+  font-family: 'Lato', sans-serif;
+}
+
+path {
+  stroke: steelblue;
+  stroke-width: 5;
+  opacity: 0.85;
+  fill: none;
+}
+
+.team-1-path {
+  stroke: #CC0066;
+}
+
+.axis {
+  shape-rendering: crispEdges;
+}
+
+.x.axis {
+  font-size: 0.75em;
+}
+
+.x.axis line {
+  stroke: lightgrey;
+}
+
+.x.axis .minor {
+  stroke-opacity: .5;
+}
+
+.x.axis path {
+  display: none;
+}
+
+.y.axis line, .y.axis path {
+  fill: none;
+  stroke-width: 1;
+  stroke: #000;
+}
+
+#graph {
+  padding: 30px;
+  margin: auto;
+  width: 100%;
+}
+
+.ng-cloak: {
+  opacity: 0;
+}
+
+.btn {
+  width: 45%;
+}
+
+.btn:last-of-type {
+  margin-left: 10px;
+}
+
+.btn:first-of-type {
+  margin-right: 10px;
+}
+
+.goals {
+  float: right;
+}
+
+select {
+  border-width: 5px;
+}
+
+select.team1 {
+  border-color: steelblue;
+}
+
+select.team2 {
+  border-color: #CC0066;
+}
