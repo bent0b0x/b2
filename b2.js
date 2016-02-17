@@ -1,8 +1,12 @@
 var b2 = {
 
+
   graphLineData: function(data, selector) {
 
+
     var b2Object = new B2Object();
+
+    b2Object.data = data;
 
     var m = [80, 80, 80, 80]; // margins
     var w = 1000 - m[1] - m[3]; // width
@@ -24,53 +28,10 @@ var b2 = {
     b2Object.m = m;
 
 
-    var yMax = d3.max(data[0], function (d) {
-      return d.y;
-    });
-    for (var i = 1; i < data.length; i++) {
-      yMax = Math.max(yMax, d3.max(data[i], function (d) {
-        return d.y;
-      }));
-    }
-
-    var xMax = d3.max(data[0], function (d) {
-      return d.x;
-    });
-    for (var i = 1; i < data.length; i++) {
-      xMax = Math.max(xMax, d3.max(data[i], function (d) {
-        return d.x;
-      }));
-    }
-
-    var yMin = d3.min(data[0], function (d) {
-      return d.y;
-    });
-    for (var i = 1; i < data.length; i++) {
-      yMin = Math.min(yMin, d3.min(data[i], function (d) {
-        return d.y;
-      }));
-    }
-
-    var xMin = d3.min(data[0], function (d) {
-      return d.x;
-    });
-    for (var i = 1; i < data.length; i++) {
-      xMin = Math.min(xMin, d3.min(data[i], function (d) {
-        return d.x;
-      }));
-    }
-
-    b2Object.xMin = xMin;
-    b2Object.xMax = xMax;
-    b2Object.yMin = yMin;
-    b2Object.yMax = yMax;
-
-    b2Object.b2y = d3.scale.linear().domain([yMin, yMax]).range([h, 0]);
-    b2Object.b2x = d3.scale.linear().domain([xMin, xMax]).range([0, w]);
+    b2Object.setupScale(data);
 
     b2Object.graph = graph;
 
-    b2Object.data = data;
       
     // create a line function that can convert data[] into x and y points
     var line = d3.svg.line()
@@ -135,6 +96,59 @@ B2Object.prototype.b2y = function (y) {
   return d3.scale.linear().domain([this.yMin, this.yMax]).range([this.h, 0]);
 }*/
 
+B2Object.prototype.setupScale = function () {
+  
+  var context = this;
+
+  var data = this.data;
+
+  var yMax = d3.max(data[0], function (d) {
+    return context.mapYFunc(d);
+  });
+  for (var i = 1; i < data.length; i++) {
+    yMax = Math.max(yMax, d3.max(data[i], function (d) {
+      return context.mapYFunc(d);
+    }));
+  }
+
+  var xMax = d3.max(data[0], function (d) {
+    return context.mapXFunc(d);
+  });
+  for (var i = 1; i < data.length; i++) {
+    xMax = Math.max(xMax, d3.max(data[i], function (d) {
+      return context.mapXFunc(d);
+    }));
+  }
+
+  var yMin = d3.min(data[0], function (d) {
+    return context.mapYFunc(d);
+  });
+  for (var i = 1; i < data.length; i++) {
+    yMin = Math.min(yMin, d3.min(data[i], function (d) {
+      return context.mapYFunc(d);
+    }));
+  }
+
+  var xMin = d3.min(data[0], function (d) {
+    return context.mapXFunc(d);
+  });
+  for (var i = 1; i < data.length; i++) {
+    xMin = Math.min(xMin, d3.min(data[i], function (d) {
+      return context.mapXFunc(d);
+    }));
+  }
+
+  this.xMin = xMin;
+  this.xMax = xMax;
+  this.yMin = yMin;
+  this.yMax = yMax;
+
+  this.b2y = d3.scale.linear().domain([this.yMin, this.yMax]).range([this.h, 0]);
+  this.b2x = d3.scale.linear().domain([this.xMin, this.xMax]).range([0, this.w]);
+
+  return this;
+}
+
 B2Object.prototype.details = function (deets) {
 
   for (var deet in deets) {
@@ -187,12 +201,40 @@ B2Object.prototype.xTicks = function (ticks) {
   this.xTicksVal = ticks;
 
   return this;
-},
+}
 
 B2Object.prototype.yTicks = function (ticks) {
   this.yTicksVal = ticks;
 
   return this;
+};
+
+B2Object.prototype.mapXFunc = function (datum) {
+  return datum.x;
+};
+
+B2Object.prototype.mapYFunc = function (datum) {
+  return datum.y;
+};
+
+B2Object.prototype.mapX = function (func) {
+
+  this.mapXFunc = func;
+
+  this.setupScale();
+
+  return this;
+
+};
+
+B2Object.prototype.mapY = function (func) {
+
+  this.mapYFunc = func;
+
+  this.setupScale();
+
+  return this;
+
 }
 
 //Draw the axes
@@ -248,6 +290,7 @@ B2Object.prototype.duration = function (duration) {
   return this;
 };
 
+
 B2Object.prototype.ease = function (ease) {
   this.easeVal = ease;
 
@@ -298,10 +341,10 @@ B2Object.prototype.draw = function () {
           .attr('r', 2)
         })
         .attr('cx', function (d) {
-          return context.b2x(d.x);
+          return context.b2x(context.mapXFunc(d));
         })
         .attr('cy', function (d) {
-          return context.b2y(d.y);
+          return context.b2y(context.mapYFunc(d));
         })
     }
   });
@@ -320,8 +363,8 @@ for (var i = 0; i < 100; i ++) {
   var x = Math.random()*100;
   var y = Math.random()*100;
   data.push({
-    x: x,
-    y: y
+    a: x,
+    b: y,
   });
   data2.push({
     x: y,
@@ -345,6 +388,12 @@ b2.graphLineData([data])
   yTicks: 4,
   ease: 'linear',
   duration: 500
+})
+.mapX(function (d) {
+  return d.a;
+})
+.mapY(function (d) {
+  return d.b;
 })
 .draw();
 
