@@ -32,22 +32,8 @@ var b2 = {
 
     b2Object.graph = graph;
 
-      
-    // create a line function that can convert data[] into x and y points
-    var line = d3.svg.line()
-      // assign the X function to plot our line as we wish
-      .x( function (d,i) { 
-        return b2Object.b2x(d.x); 
-      })
-      .y( function(d) { 
-        // verbose logging to show what's actually being done
-        //console.log('Plotting Y value for data point: ' + d + ' to be at: ' + y(d.wins) + " using our yScale.");
-        d.y = d.y || 0;
-        // return the Y coordinate where we want to plot this datapoint
-        return b2Object.b2y(d.y); 
-    });
-
-    b2Object.line = line;
+    
+    b2Object.setupLine();
 
     return b2Object;
   },
@@ -149,6 +135,23 @@ B2Object.prototype.setupScale = function () {
   return this;
 }
 
+B2Object.prototype.setupLine = function () {
+
+  var context = this;
+
+  context.line = d3.svg.line()
+    // assign the X function to plot our line as we wish
+    .x( function (d,i) { 
+      return context.b2x(context.mapXFunc(d)); 
+    })
+    .y( function(d) { 
+      // verbose logging to show what's actually being done
+      //console.log('Plotting Y value for data point: ' + d + ' to be at: ' + y(d.wins) + " using our yScale.")
+      // return the Y coordinate where we want to plot this datapoint
+      return context.b2y(context.mapYFunc(d)); 
+    });
+}
+
 B2Object.prototype.details = function (deets) {
 
   for (var deet in deets) {
@@ -223,6 +226,8 @@ B2Object.prototype.mapX = function (func) {
 
   this.setupScale();
 
+  this.setupLine();
+
   return this;
 
 };
@@ -232,6 +237,8 @@ B2Object.prototype.mapY = function (func) {
   this.mapYFunc = func;
 
   this.setupScale();
+
+  this.setupLine();
 
   return this;
 
@@ -283,6 +290,25 @@ B2Object.prototype.drawAxes = function () {
     return this;
 };
 
+B2Object.prototype.sortData = function () {
+  var context = this;
+  this.data.forEach(function (dataSet) {
+    dataSet.sort(function (a, b) {
+      return context.sortFunc(a, b, context);
+    });
+  });
+};
+
+B2Object.prototype.sortFunc = function (a, b, context) {
+  return context.mapXFunc(a) - context.mapXFunc(b);
+};
+
+B2Object.prototype.sort = function (func) {
+  this.sortFunc = func;
+
+  return this;
+}
+
 //Duration of line drawing
 B2Object.prototype.duration = function (duration) {
   this.drawDuration = duration;
@@ -309,6 +335,8 @@ B2Object.prototype.draw = function () {
   var context = this;
 
   this.drawAxes();
+
+  this.sortData();
 
   this.data.forEach(function (dataSet, index) {
 
@@ -372,12 +400,6 @@ for (var i = 0; i < 100; i ++) {
   });
 }
 
-data = data.sort(function (a, b) {
-  return a.x - b.x;
-});
-data2 = data2.sort(function (a, b) {
-  return b.x - a.x;
-});
 
 b2.graphLineData([data])
 .details({
@@ -394,6 +416,9 @@ b2.graphLineData([data])
 })
 .mapY(function (d) {
   return d.b;
+})
+.sort(function (a, b) {
+  return b.a - a.a;
 })
 .draw();
 
