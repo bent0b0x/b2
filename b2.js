@@ -349,6 +349,9 @@ B2Object.prototype.draw = function () {
       path
       .attr("stroke-dasharray", totalLength + " " + totalLength)
       .attr("stroke-dashoffset", totalLength)
+      .attr('fill', 'none')
+      .attr('stroke-width', 5)
+      .attr('stroke', 'black')
       .transition()
         .duration(context.drawDuration)
         .ease(context.easeVal)
@@ -403,22 +406,22 @@ for (var i = 0; i < 100; i ++) {
 
 b2.graphLineData([data])
 .details({
-  type: 'scatter',
+  type: 'path',
   width: 500,
   height: 500,
   xTicks: 4,
   yTicks: 4,
   ease: 'linear',
-  duration: 500
-})
-.mapX(function (d) {
-  return d.a;
-})
-.mapY(function (d) {
-  return d.b;
-})
-.sort(function (a, b) {
-  return b.a - a.a;
+  duration: 500,
+  sort: function (a, b) {
+    return b.a - a.a;
+  },
+  mapX: function (d) {
+    return d.a;
+  },
+  mapY: function (d) {
+    return d.b;
+  }
 })
 .draw();
 
