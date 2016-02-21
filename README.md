@@ -43,4 +43,5 @@ And that's it! You have a graph on your page within the `#graph` element.
 
 Currently supports line graphs (with multiple lines permitted), bar graphs, and scatter plots. By default `b2` looks in the `x` and `y` attributes of each data point, but provide a `mapX` and/or `mapY` function to allow your data to be in any format.
 
-
+#In the pipeline
+Custom classes for each component of the graph for easier styling. 
