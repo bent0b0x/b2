@@ -71,7 +71,9 @@ var B2Object = function() {
   this.xOrientationVal = 'bottom';
   this.yOrientationVal = 'left';
   this.easeVal = 'linear';
-  this.typeVal = 'path';
+  this.typeVal = 'line';
+  this.rVal = 3;
+  this.lineWidthVal = 5;
 };
 
 /*B2Object.prototype.b2x = function (x) {
@@ -184,7 +186,13 @@ B2Object.prototype.height = function (height) {
   this.b2y = d3.scale.linear().domain([this.yMin, this.yMax]).range([this.h, 0]);
 
   return this;
-}
+};
+
+B2Object.prototype.r = function (val) {
+  this.rVal = val;
+
+  return this;
+};
 
 //Set the x axis label
 B2Object.prototype.xLabel = function (label) {
@@ -253,8 +261,8 @@ B2Object.prototype.drawAxes = function () {
   d3.select('.x.label').remove();
   d3.select('.y.label').remove();
 
-  this.xAxis = d3.svg.axis().scale(this.b2x).ticks(this.xTicksVal).orient(this.xOrientationVal);
-  this.yAxis = d3.svg.axis().scale(this.b2y).ticks(this.yTicksVal).orient(this.yOrientationVal);
+  this.xAxis = d3.svg.axis().scale(this.b2x).ticks(this.xTicksVal).orient(this.xOrientationVal).tickSize(2);
+  this.yAxis = d3.svg.axis().scale(this.b2y).ticks(this.yTicksVal).orient(this.yOrientationVal).tickSize(2)
 
 
   this.graph.append("svg:g")
@@ -328,6 +336,12 @@ B2Object.prototype.type = function (type) {
   this.typeVal = type;
 
   return this;
+};
+
+B2Object.prototype.lineWidth = function (val) {
+  this.lineWidthVal = val;
+
+  return this;
 }
 
 //Draw the graph on the page
@@ -338,48 +352,75 @@ B2Object.prototype.draw = function () {
 
   this.sortData();
 
-  this.data.forEach(function (dataSet, index) {
+  var combinedData = [];
+  for (var i = 0; i < this.data.length; i++) {
+    combinedData = combinedData.concat(this.data[i]);
+  }
 
-    if (context.typeVal === 'path') {
-      var path = context.graph.append("svg:path")
-        .attr("d", context.line(dataSet))
 
-      var totalLength = path.node().getTotalLength();
+  if (context.typeVal === 'line') {
+    this.data.forEach(function (dataSet, index) {
+    var path = context.graph.append("svg:path")
+      .attr("d", context.line(dataSet))
 
-      path
-      .attr("stroke-dasharray", totalLength + " " + totalLength)
-      .attr("stroke-dashoffset", totalLength)
-      .attr('fill', 'none')
-      .attr('stroke-width', 5)
-      .attr('stroke', 'black')
+    var totalLength = path.node().getTotalLength();
+
+    path
+    .attr("stroke-dasharray", totalLength + " " + totalLength)
+    .attr("stroke-dashoffset", totalLength)
+    .attr('fill', 'none')
+    .attr('stroke-width', context.lineWidthVal)
+    .attr('stroke', 'black')
+    .transition()
+      .duration(context.drawDuration)
+      .ease(context.easeVal)
+      .attr("stroke-dashoffset", 0);
+    });
+
+  } else if (context.typeVal === 'scatter') {
+    context.graph.selectAll('circle')
+      .data(combinedData)
+      .enter()
+      .append('circle')
       .transition()
-        .duration(context.drawDuration)
-        .ease(context.easeVal)
-        .attr("stroke-dashoffset", 0);
-
-    } else if (context.typeVal === 'scatter') {
-      context.graph.selectAll('circle')
-        .data(dataSet)
-        .enter()
-        .append('circle')
-        .transition()
-        .duration(context.drawDuration)
-        .ease(context.easeVal)
-        .each('start', function () {
-          d3.select(this)
-          .attr('cx', 0)
-          .attr('cy', 0)
-          .attr('r', 2)
-        })
-        .attr('cx', function (d) {
-          return context.b2x(context.mapXFunc(d));
-        })
-        .attr('cy', function (d) {
-          return context.b2y(context.mapYFunc(d));
-        })
-    }
-  });
-
+      .duration(context.drawDuration)
+      .ease(context.easeVal)
+      .each('start', function () {
+        d3.select(this)
+        .attr('r', 0)
+      })
+      .attr('cx', function (d) {
+        return context.w - context.b2x(context.mapXFunc(d));
+      })
+      .attr('cy', function (d) {
+        return context.h - context.b2y(context.mapYFunc(d));
+      })
+      .attr('r', context.rVal);
+  } else if (context.typeVal === 'bar') {
+    var barWidth = context.w/combinedData.length/2;
+    context.graph.selectAll(".bar")
+    .data(combinedData)
+    .enter().append("rect")
+    .attr("class", "bar")
+    .transition()
+    .duration(context.drawDuration)
+    .ease(context.easeVal)
+    .each('start', function () {
+      d3.select(this)
+      .attr('height', 0)
+      .attr('y', context.h)
+    })
+    .attr("x", function(d) { 
+      return context.b2x(context.mapXFunc(d)) - barWidth/2; 
+    })
+    .attr("width", barWidth)
+    .attr("y", function(d) { 
+      return context.b2y(context.mapYFunc(d)); 
+    })
+    .attr("height", function(d) { 
+      return context.h - context.b2y(context.mapYFunc(d)); 
+    });
+  }
   return this;
 };
 
@@ -390,32 +431,31 @@ window.b2 = b2;
 //Seed data
 var data = [];
 var data2 = [];
-for (var i = 0; i < 100; i ++) {
-  var x = Math.random()*100;
-  var y = Math.random()*100;
+for (var i = 0; i < 1000; i ++) {
+  var x = i;
+  var y = i;
   data.push({
-    a: x,
-    b: y,
+    a: Math.random()*1000,
+    b: Math.random()*1000,
   });
   data2.push({
-    x: y,
-    y: x
+    a: x*2,
+    b: -y
   });
 }
 
 
 b2.graphLineData([data])
 .details({
-  type: 'path',
-  width: 500,
-  height: 500,
-  xTicks: 4,
+  type: 'line',
+  width: 1000,
+  height: 400,
+  xTicks: 10,
   yTicks: 4,
-  ease: 'linear',
+  ease: 'ease',
   duration: 500,
-  sort: function (a, b) {
-    return b.a - a.a;
-  },
+  r: 5,
+  lineWidth: 1,
   mapX: function (d) {
     return d.a;
   },
